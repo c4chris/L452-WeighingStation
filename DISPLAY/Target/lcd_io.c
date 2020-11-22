@@ -116,23 +116,10 @@ int32_t BSP_LCD_DeInit(uint32_t Instance)
 int32_t BSP_SPI1_Send(uint8_t *pData, uint16_t Length)
 {
   int32_t ret = BSP_ERROR_NONE;
-#if 0
-  const TickType_t xMaxBlockTime = pdMS_TO_TICKS( BUS_SPI1_POLL_TIMEOUT );
-  uint32_t ulNotificationValue;
-  HAL_StatusTypeDef res = HAL_SPI_Transmit_DMA(&hspi1, pData, Length);
-  //HAL_StatusTypeDef res = HAL_SPI_Transmit_IT(&hspi1, pData, Length);
-	ulNotificationValue = ulTaskNotifyTake(pdTRUE, xMaxBlockTime);
-	if (res != HAL_OK || ulNotificationValue != 1)
-	{
-    ret = BSP_ERROR_UNKNOWN_FAILURE;
-	}
-#endif
-#if 1
   if(HAL_SPI_Transmit(&hspi1, pData, Length, BUS_SPI1_POLL_TIMEOUT) != HAL_OK)
   {
       ret = BSP_ERROR_UNKNOWN_FAILURE;
   }
-#endif
   return ret;
 }
 
@@ -340,6 +327,8 @@ int32_t BSP_LCD_SetDisplayWindow(uint32_t Instance, uint32_t Xpos, uint32_t Ypos
 int32_t BSP_LCD_WriteData(uint32_t Instance, uint8_t *pData, uint32_t Length)
 {
   int32_t ret = BSP_ERROR_NONE;
+  const TickType_t xMaxBlockTime = pdMS_TO_TICKS( BUS_SPI1_POLL_TIMEOUT );
+  uint32_t ulNotificationValue;
 
   if (Instance >= LCD_INSTANCES_NBR)
   {
@@ -355,9 +344,12 @@ int32_t BSP_LCD_WriteData(uint32_t Instance, uint8_t *pData, uint32_t Length)
     HAL_SPI_Init(&hLCDSPI);
 
     /* Send Data */
-    if(LCD_SPI_Send(pData, Length)!= BSP_ERROR_NONE)
+    // FIXME - should set task no notify
+    HAL_StatusTypeDef res = HAL_SPI_Transmit_DMA(&hLCDSPI, pData, Length);
+    ulNotificationValue = ulTaskNotifyTake(pdTRUE, xMaxBlockTime);
+    if (res != HAL_OK || ulNotificationValue != 1)
     {
-      ret = BSP_ERROR_BUS_FAILURE;
+    	ret = BSP_ERROR_BUS_FAILURE;
     }
 
     /* Go back to 8-bit mode */
@@ -387,7 +379,7 @@ static int32_t LCD_IO_SendData(uint8_t *pData, uint32_t Length)
   /* Send Data */
   if(LCD_SPI_Send(pData, Length)!= BSP_ERROR_NONE)
   {
-    ret = BSP_ERROR_BUS_FAILURE;
+  	ret = BSP_ERROR_BUS_FAILURE;
   }
 
   /* Deselect : Chip Select high */

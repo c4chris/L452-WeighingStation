@@ -163,7 +163,6 @@ int main(void)
   MX_I2C3_Init();
   MX_I2C4_Init();
   /* USER CODE BEGIN 2 */
-  MX_DISPLAY_Init();
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -893,6 +892,7 @@ void StartWriteLineTask(void const * argument)
   /* USER CODE BEGIN StartWriteLineTask */
 	uint8_t msg[50];
 	unsigned int c = 0;
+  MX_DISPLAY_Init();
   /* Infinite loop */
   for(;;)
   {
