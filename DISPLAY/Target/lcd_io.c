@@ -20,6 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "lcd_io.h"
 #include "../ili9341/ili9341.h"
+#include "cmsis_os.h"
 
 typedef struct
 {
@@ -115,11 +116,23 @@ int32_t BSP_LCD_DeInit(uint32_t Instance)
 int32_t BSP_SPI1_Send(uint8_t *pData, uint16_t Length)
 {
   int32_t ret = BSP_ERROR_NONE;
-
+#if 0
+  const TickType_t xMaxBlockTime = pdMS_TO_TICKS( BUS_SPI1_POLL_TIMEOUT );
+  uint32_t ulNotificationValue;
+  HAL_StatusTypeDef res = HAL_SPI_Transmit_DMA(&hspi1, pData, Length);
+  //HAL_StatusTypeDef res = HAL_SPI_Transmit_IT(&hspi1, pData, Length);
+	ulNotificationValue = ulTaskNotifyTake(pdTRUE, xMaxBlockTime);
+	if (res != HAL_OK || ulNotificationValue != 1)
+	{
+    ret = BSP_ERROR_UNKNOWN_FAILURE;
+	}
+#endif
+#if 1
   if(HAL_SPI_Transmit(&hspi1, pData, Length, BUS_SPI1_POLL_TIMEOUT) != HAL_OK)
   {
       ret = BSP_ERROR_UNKNOWN_FAILURE;
   }
+#endif
   return ret;
 }
 

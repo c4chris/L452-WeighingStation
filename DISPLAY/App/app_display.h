@@ -98,6 +98,5 @@ void     BSP_LCD_DisplayStringAtLine(uint16_t Line, uint8_t *ptr, Text_AlignMode
 void     BSP_LCD_DisplayStringAt(uint16_t X, uint16_t Y, uint8_t *pText, Text_AlignModeTypdef mode);
 
 void MX_DISPLAY_Init(void);
-void MX_DISPLAY_Process(void);
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
