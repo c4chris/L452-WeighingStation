@@ -80,15 +80,19 @@ volatile unsigned int u2tc;
 volatile unsigned int u2htc;
 volatile unsigned int u2ec;
 volatile unsigned int u2ic;
-volatile unsigned int errs1;
-volatile unsigned int counts1;
-volatile unsigned int stale1;
-volatile unsigned int badstatus1;
-volatile uint8_t bridgeValue1[4];
+volatile unsigned int errs1, errs2, errs3, errs4;
+volatile unsigned int counts1, counts2, counts3, counts4;
+volatile unsigned int stale1, stale2, stale3, stale4;
+volatile unsigned int badstatus1, badstatus2, badstatus3, badstatus4;
+volatile uint8_t bridgeValue1[4], bridgeValue2[4], bridgeValue3[4], bridgeValue4[4];
 unsigned char dbgBuf[256];
 unsigned char input[64];
 unsigned char u2tx[256];
 unsigned char u2rx[64];
+volatile uint8_t setZero1;
+volatile uint8_t setZero2;
+volatile uint8_t setZero3;
+volatile uint8_t setZero4;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -787,6 +791,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	if (GPIO_Pin == B1_Pin)
 	{
+		setZero1 = 1;
+		setZero2 = 1;
+		setZero3 = 1;
+		setZero4 = 1;
 		//HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
 	}
 }
@@ -895,37 +903,47 @@ void StartDefaultTask(void const * argument)
 void StartWriteLineTask(void const * argument)
 {
   /* USER CODE BEGIN StartWriteLineTask */
-	const uint32_t low = 950;
+	uint32_t low1 = 950;
+	uint32_t low2 = 950;
+	uint32_t low3 = 950;
+	uint32_t low4 = 950;
 	uint8_t msg[50];
-	unsigned int c1 = 0;
+	unsigned int c1 = 0, c2 = 0, c3 = 0, c4 = 0;
   MX_DISPLAY_Init();
-  /* Infinite loop */
-	BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
 	BSP_LCD_SetBackColor(0);
-	BSP_LCD_SetFont(&Font24);
-	BSP_LCD_DisplayStringAtLine(0, (uint8_t*)"STM32L452 WS", CENTER_MODE);
+  /* Infinite loop */
   for(;;)
   {
   	uint32_t c = osKernelSysTick() / pdMS_TO_TICKS(1000);
+  	BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
+  	BSP_LCD_SetFont(&Font24);
+		sprintf((char *)msg,"WS %lu",c);
+		BSP_LCD_DisplayStringAtLine(0, msg, CENTER_MODE);
 		BSP_LCD_SetFont(&Font16);
 		BSP_LCD_SetTextColor(LCD_COLOR_CYAN);
-		//sprintf((char *)msg,"%u %u %u %u %u",c++,errs1,counts1,stale1,badstatus1);
-		sprintf((char *)msg,"%lu %u %u",c,errs1,badstatus1);
+		sprintf((char *)msg,"%u %u %u %u",errs1,badstatus1,errs2,badstatus2);
 		BSP_LCD_DisplayStringAtLine(3, msg, CENTER_MODE);
+		sprintf((char *)msg,"%u %u %u %u",errs3,badstatus3,errs4,badstatus4);
+		BSP_LCD_DisplayStringAtLine(4, msg, CENTER_MODE);
 		if (c1 != counts1)
 		{
 			uint32_t weight = (bridgeValue1[0] & 0x3f) * 256 + bridgeValue1[1];
 			//sprintf((char *)msg,"  raw : %ld  ", weight);
 			//BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize()/2 + 75, msg, CENTER_MODE);
-			if (weight < low)
+			if (setZero1)
+			{
+				low1 = weight;
+				setZero1 = 0;
+			}
+			if (weight < low1)
 				weight = 0;
 			else
-				weight -= low;
+				weight -= low1;
 			weight *= 5000;
 			weight /= 14000;
 			sprintf((char *)msg,"1: %2d.%02d kg", (uint16_t)(weight / 100), (uint16_t)(weight % 100));
 			BSP_LCD_SetFont(&Font24);
-			BSP_LCD_SetTextColor(LCD_COLOR_LIGHTRED);
+			BSP_LCD_SetTextColor(LCD_COLOR_LIGHTGRAY);
 			BSP_LCD_DisplayStringAtLine(4, msg, CENTER_MODE);
 			uint32_t temp = (bridgeValue1[2] << 3) + (bridgeValue1[3] >> 5);
 			temp *= 2000;
@@ -935,6 +953,93 @@ void StartWriteLineTask(void const * argument)
 			BSP_LCD_SetTextColor(LCD_COLOR_LIGHTMAGENTA);
 			BSP_LCD_DisplayStringAtLine(5, msg, CENTER_MODE);
 			c1 = counts1;
+		}
+		if (c2 != counts2)
+		{
+			uint32_t weight = (bridgeValue2[0] & 0x3f) * 256 + bridgeValue2[1];
+			//sprintf((char *)msg,"  raw : %ld  ", weight);
+			//BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize()/2 + 75, msg, CENTER_MODE);
+			if (setZero2)
+			{
+				low2 = weight;
+				setZero2 = 0;
+			}
+			if (weight < low2)
+				weight = 0;
+			else
+				weight -= low2;
+			weight *= 5000;
+			weight /= 14000;
+			sprintf((char *)msg,"2: %2d.%02d kg", (uint16_t)(weight / 100), (uint16_t)(weight % 100));
+			BSP_LCD_SetFont(&Font24);
+			BSP_LCD_SetTextColor(LCD_COLOR_LIGHTBLUE);
+			BSP_LCD_DisplayStringAtLine(6, msg, CENTER_MODE);
+			uint32_t temp = (bridgeValue2[2] << 3) + (bridgeValue2[3] >> 5);
+			temp *= 2000;
+			temp /= 2048; // just a guess at this point...
+			temp -= 500;
+			sprintf((char *)msg,"  T: %2d.%01d C  ", (uint16_t)(temp / 10), (uint16_t)(temp % 10));
+			BSP_LCD_SetTextColor(LCD_COLOR_LIGHTMAGENTA);
+			BSP_LCD_DisplayStringAtLine(7, msg, CENTER_MODE);
+			c2 = counts2;
+		}
+		if (c3 != counts3)
+		{
+			uint32_t weight = (bridgeValue3[0] & 0x3f) * 256 + bridgeValue3[1];
+			//sprintf((char *)msg,"  raw : %ld  ", weight);
+			//BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize()/2 + 75, msg, CENTER_MODE);
+			if (setZero3)
+			{
+				low3 = weight;
+				setZero3 = 0;
+			}
+			if (weight < low3)
+				weight = 0;
+			else
+				weight -= low3;
+			weight *= 5000;
+			weight /= 14000;
+			sprintf((char *)msg,"3: %2d.%02d kg", (uint16_t)(weight / 100), (uint16_t)(weight % 100));
+			BSP_LCD_SetFont(&Font24);
+			BSP_LCD_SetTextColor(LCD_COLOR_LIGHTGREEN);
+			BSP_LCD_DisplayStringAtLine(8, msg, CENTER_MODE);
+			uint32_t temp = (bridgeValue3[2] << 3) + (bridgeValue3[3] >> 5);
+			temp *= 2000;
+			temp /= 2048; // just a guess at this point...
+			temp -= 500;
+			sprintf((char *)msg,"  T: %2d.%01d C  ", (uint16_t)(temp / 10), (uint16_t)(temp % 10));
+			BSP_LCD_SetTextColor(LCD_COLOR_LIGHTMAGENTA);
+			BSP_LCD_DisplayStringAtLine(9, msg, CENTER_MODE);
+			c3 = counts3;
+		}
+		if (c4 != counts4)
+		{
+			uint32_t weight = (bridgeValue4[0] & 0x3f) * 256 + bridgeValue4[1];
+			//sprintf((char *)msg,"  raw : %ld  ", weight);
+			//BSP_LCD_DisplayStringAt(0, BSP_LCD_GetYSize()/2 + 75, msg, CENTER_MODE);
+			if (setZero4)
+			{
+				low4 = weight;
+				setZero4 = 0;
+			}
+			if (weight < low4)
+				weight = 0;
+			else
+				weight -= low4;
+			weight *= 5000;
+			weight /= 14000;
+			sprintf((char *)msg,"4: %2d.%02d kg", (uint16_t)(weight / 100), (uint16_t)(weight % 100));
+			BSP_LCD_SetFont(&Font24);
+			BSP_LCD_SetTextColor(LCD_COLOR_YELLOW);
+			BSP_LCD_DisplayStringAtLine(10, msg, CENTER_MODE);
+			uint32_t temp = (bridgeValue4[2] << 3) + (bridgeValue4[3] >> 5);
+			temp *= 2000;
+			temp /= 2048; // just a guess at this point...
+			temp -= 500;
+			sprintf((char *)msg,"  T: %2d.%01d C  ", (uint16_t)(temp / 10), (uint16_t)(temp % 10));
+			BSP_LCD_SetTextColor(LCD_COLOR_LIGHTMAGENTA);
+			BSP_LCD_DisplayStringAtLine(11, msg, CENTER_MODE);
+			c4 = counts4;
 		}
     osDelay(333);
   }
@@ -988,11 +1093,30 @@ void StartReadI2C1Task(void const * argument)
 void StartReadI2C2Task(void const * argument)
 {
   /* USER CODE BEGIN StartReadI2C2Task */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(50);
-  }
+	const uint32_t I2C_Timeout = I2Cx_TIMEOUT_MAX;
+	HAL_StatusTypeDef res;
+	uint8_t dataBuf[4];
+	/* Infinite loop */
+	for(;;)
+	{
+		memset(dataBuf, 0, 4);
+		res = HAL_I2C_Master_Receive(&hi2c2, (0x28 << 1) | 1, dataBuf, 4, I2C_Timeout);
+		if (res != HAL_OK)
+			errs2 += 1;
+		else
+		{
+			uint8_t status = (dataBuf[0] >> 6) & 0x3;
+			if (status == 0)
+			{
+				counts2 += 1;
+				memcpy((void *) bridgeValue2, dataBuf, 4);
+			} else if (status == 2)
+				stale2 += 1;
+			else
+				badstatus2 += 1;
+		}
+		osDelay(50);
+	}
   /* USER CODE END StartReadI2C2Task */
 }
 
@@ -1006,11 +1130,30 @@ void StartReadI2C2Task(void const * argument)
 void StartReadI2C3Task(void const * argument)
 {
   /* USER CODE BEGIN StartReadI2C3Task */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(50);
-  }
+	const uint32_t I2C_Timeout = I2Cx_TIMEOUT_MAX;
+	HAL_StatusTypeDef res;
+	uint8_t dataBuf[4];
+	/* Infinite loop */
+	for(;;)
+	{
+		memset(dataBuf, 0, 4);
+		res = HAL_I2C_Master_Receive(&hi2c3, (0x28 << 1) | 1, dataBuf, 4, I2C_Timeout);
+		if (res != HAL_OK)
+			errs3 += 1;
+		else
+		{
+			uint8_t status = (dataBuf[0] >> 6) & 0x3;
+			if (status == 0)
+			{
+				counts3 += 1;
+				memcpy((void *) bridgeValue3, dataBuf, 4);
+			} else if (status == 2)
+				stale3 += 1;
+			else
+				badstatus3 += 1;
+		}
+		osDelay(50);
+	}
   /* USER CODE END StartReadI2C3Task */
 }
 
@@ -1024,11 +1167,30 @@ void StartReadI2C3Task(void const * argument)
 void StartReadI2C4Task(void const * argument)
 {
   /* USER CODE BEGIN StartReadI2C4Task */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(50);
-  }
+	const uint32_t I2C_Timeout = I2Cx_TIMEOUT_MAX;
+	HAL_StatusTypeDef res;
+	uint8_t dataBuf[4];
+	/* Infinite loop */
+	for(;;)
+	{
+		memset(dataBuf, 0, 4);
+		res = HAL_I2C_Master_Receive(&hi2c4, (0x28 << 1) | 1, dataBuf, 4, I2C_Timeout);
+		if (res != HAL_OK)
+			errs4 += 1;
+		else
+		{
+			uint8_t status = (dataBuf[0] >> 6) & 0x3;
+			if (status == 0)
+			{
+				counts4 += 1;
+				memcpy((void *) bridgeValue4, dataBuf, 4);
+			} else if (status == 2)
+				stale4 += 1;
+			else
+				badstatus4 += 1;
+		}
+		osDelay(50);
+	}
   /* USER CODE END StartReadI2C4Task */
 }
 
