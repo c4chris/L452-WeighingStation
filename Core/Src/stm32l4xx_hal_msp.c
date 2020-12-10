@@ -151,6 +151,45 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
   {
   /* USER CODE BEGIN I2C1_MspInit 0 */
 
+  	// need to deal with stuck I2C bus, e.g. when the MCU resets but the slave devices do not and are still trying to send data on the bus...
+    // This seems to do the trick for me
+  	// I2C1_SDA_GPIO_Port is GPIOA
+    __HAL_RCC_GPIOA_CLK_ENABLE();  // just to be sure
+    HAL_GPIO_WritePin(I2C1_SDA_GPIO_Port, I2C1_SCL_Pin|I2C1_SDA_Pin, GPIO_PIN_SET);
+    GPIO_InitStruct.Pin = I2C1_SCL_Pin|I2C1_SDA_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    HAL_GPIO_Init(I2C1_SDA_GPIO_Port, &GPIO_InitStruct);
+    GPIO_PinState bit = HAL_GPIO_ReadPin(I2C1_SDA_GPIO_Port, I2C1_SDA_Pin);
+    if (bit == GPIO_PIN_RESET)
+    {
+    	// need to flush...
+    	while (bit == GPIO_PIN_RESET)
+    	{
+        HAL_GPIO_WritePin(I2C1_SDA_GPIO_Port, I2C1_SCL_Pin, GPIO_PIN_RESET);
+        HAL_Delay(1);
+      	for (unsigned int i = 0; i < 10; i++)
+      	{
+          HAL_GPIO_WritePin(I2C1_SDA_GPIO_Port, I2C1_SCL_Pin, GPIO_PIN_SET);
+          HAL_Delay(1);
+          HAL_GPIO_WritePin(I2C1_SDA_GPIO_Port, I2C1_SCL_Pin, GPIO_PIN_RESET);
+          HAL_Delay(1);
+      	}
+      	bit = HAL_GPIO_ReadPin(I2C1_SDA_GPIO_Port, I2C1_SDA_Pin);
+    	}
+    	// send a STOP signal (SDA from low to high while CLK is high)
+      HAL_GPIO_WritePin(I2C1_SDA_GPIO_Port, I2C1_SDA_Pin, GPIO_PIN_RESET);
+      HAL_Delay(1);
+      HAL_GPIO_WritePin(I2C1_SDA_GPIO_Port, I2C1_SCL_Pin, GPIO_PIN_SET);
+      HAL_Delay(1);
+      HAL_GPIO_WritePin(I2C1_SDA_GPIO_Port, I2C1_SDA_Pin, GPIO_PIN_SET);
+      HAL_Delay(1);
+      //bus status is now : FREE
+    }
+    // deconfig pins
+    HAL_GPIO_DeInit(I2C1_SDA_GPIO_Port, I2C1_SCL_Pin|I2C1_SDA_Pin);
+
   /* USER CODE END I2C1_MspInit 0 */
 
     __HAL_RCC_GPIOA_CLK_ENABLE();
@@ -188,11 +227,54 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
 
   /* USER CODE BEGIN I2C1_MspInit 1 */
 
+    // Try to make sure we are in reset state
+  	__HAL_RCC_I2C1_FORCE_RESET();
+  	__HAL_RCC_I2C1_RELEASE_RESET();
+
   /* USER CODE END I2C1_MspInit 1 */
   }
   else if(hi2c->Instance==I2C2)
   {
   /* USER CODE BEGIN I2C2_MspInit 0 */
+
+  	// need to deal with stuck I2C bus, e.g. when the MCU resets but the slave devices do not and are still trying to send data on the bus...
+    // This seems to do the trick for me
+  	// I2C1_SDA_GPIO_Port is GPIOB
+    __HAL_RCC_GPIOB_CLK_ENABLE();  // just to be sure
+    HAL_GPIO_WritePin(I2C2_SDA_GPIO_Port, I2C2_SCL_Pin|I2C2_SDA_Pin, GPIO_PIN_SET);
+    GPIO_InitStruct.Pin = I2C2_SCL_Pin|I2C2_SDA_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    HAL_GPIO_Init(I2C2_SDA_GPIO_Port, &GPIO_InitStruct);
+    GPIO_PinState bit = HAL_GPIO_ReadPin(I2C2_SDA_GPIO_Port, I2C2_SDA_Pin);
+    if (bit == GPIO_PIN_RESET)
+    {
+    	// need to flush...
+    	while (bit == GPIO_PIN_RESET)
+    	{
+        HAL_GPIO_WritePin(I2C2_SDA_GPIO_Port, I2C2_SCL_Pin, GPIO_PIN_RESET);
+        HAL_Delay(1);
+      	for (unsigned int i = 0; i < 10; i++)
+      	{
+          HAL_GPIO_WritePin(I2C2_SDA_GPIO_Port, I2C2_SCL_Pin, GPIO_PIN_SET);
+          HAL_Delay(1);
+          HAL_GPIO_WritePin(I2C2_SDA_GPIO_Port, I2C2_SCL_Pin, GPIO_PIN_RESET);
+          HAL_Delay(1);
+      	}
+      	bit = HAL_GPIO_ReadPin(I2C2_SDA_GPIO_Port, I2C2_SDA_Pin);
+    	}
+    	// send a STOP signal (SDA from low to high while CLK is high)
+      HAL_GPIO_WritePin(I2C2_SDA_GPIO_Port, I2C2_SDA_Pin, GPIO_PIN_RESET);
+      HAL_Delay(1);
+      HAL_GPIO_WritePin(I2C2_SDA_GPIO_Port, I2C2_SCL_Pin, GPIO_PIN_SET);
+      HAL_Delay(1);
+      HAL_GPIO_WritePin(I2C2_SDA_GPIO_Port, I2C2_SDA_Pin, GPIO_PIN_SET);
+      HAL_Delay(1);
+      //bus status is now : FREE
+    }
+    // deconfig pins
+    HAL_GPIO_DeInit(I2C2_SDA_GPIO_Port, I2C2_SCL_Pin|I2C2_SDA_Pin);
 
   /* USER CODE END I2C2_MspInit 0 */
 
@@ -217,11 +299,54 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
     HAL_NVIC_EnableIRQ(I2C2_ER_IRQn);
   /* USER CODE BEGIN I2C2_MspInit 1 */
 
+    // Try to make sure we are in reset state
+  	__HAL_RCC_I2C2_FORCE_RESET();
+  	__HAL_RCC_I2C2_RELEASE_RESET();
+
   /* USER CODE END I2C2_MspInit 1 */
   }
   else if(hi2c->Instance==I2C3)
   {
   /* USER CODE BEGIN I2C3_MspInit 0 */
+
+  	// need to deal with stuck I2C bus, e.g. when the MCU resets but the slave devices do not and are still trying to send data on the bus...
+    // This seems to do the trick for me
+  	// I2C1_SDA_GPIO_Port is GPIOC
+    __HAL_RCC_GPIOC_CLK_ENABLE();  // just to be sure
+    HAL_GPIO_WritePin(I2C3_SDA_GPIO_Port, I2C3_SCL_Pin|I2C3_SDA_Pin, GPIO_PIN_SET);
+    GPIO_InitStruct.Pin = I2C3_SCL_Pin|I2C3_SDA_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    HAL_GPIO_Init(I2C3_SDA_GPIO_Port, &GPIO_InitStruct);
+    GPIO_PinState bit = HAL_GPIO_ReadPin(I2C3_SDA_GPIO_Port, I2C3_SDA_Pin);
+    if (bit == GPIO_PIN_RESET)
+    {
+    	// need to flush...
+    	while (bit == GPIO_PIN_RESET)
+    	{
+        HAL_GPIO_WritePin(I2C3_SDA_GPIO_Port, I2C3_SCL_Pin, GPIO_PIN_RESET);
+        HAL_Delay(1);
+      	for (unsigned int i = 0; i < 10; i++)
+      	{
+          HAL_GPIO_WritePin(I2C3_SDA_GPIO_Port, I2C3_SCL_Pin, GPIO_PIN_SET);
+          HAL_Delay(1);
+          HAL_GPIO_WritePin(I2C3_SDA_GPIO_Port, I2C3_SCL_Pin, GPIO_PIN_RESET);
+          HAL_Delay(1);
+      	}
+      	bit = HAL_GPIO_ReadPin(I2C3_SDA_GPIO_Port, I2C3_SDA_Pin);
+    	}
+    	// send a STOP signal (SDA from low to high while CLK is high)
+      HAL_GPIO_WritePin(I2C3_SDA_GPIO_Port, I2C3_SDA_Pin, GPIO_PIN_RESET);
+      HAL_Delay(1);
+      HAL_GPIO_WritePin(I2C3_SDA_GPIO_Port, I2C3_SCL_Pin, GPIO_PIN_SET);
+      HAL_Delay(1);
+      HAL_GPIO_WritePin(I2C3_SDA_GPIO_Port, I2C3_SDA_Pin, GPIO_PIN_SET);
+      HAL_Delay(1);
+      //bus status is now : FREE
+    }
+    // deconfig pins
+    HAL_GPIO_DeInit(I2C3_SDA_GPIO_Port, I2C3_SCL_Pin|I2C3_SDA_Pin);
 
   /* USER CODE END I2C3_MspInit 0 */
 
@@ -260,11 +385,54 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
 
   /* USER CODE BEGIN I2C3_MspInit 1 */
 
+    // Try to make sure we are in reset state
+  	__HAL_RCC_I2C3_FORCE_RESET();
+  	__HAL_RCC_I2C3_RELEASE_RESET();
+
   /* USER CODE END I2C3_MspInit 1 */
   }
   else if(hi2c->Instance==I2C4)
   {
   /* USER CODE BEGIN I2C4_MspInit 0 */
+
+  	// need to deal with stuck I2C bus, e.g. when the MCU resets but the slave devices do not and are still trying to send data on the bus...
+    // This seems to do the trick for me
+  	// I2C4_SDA_GPIO_Port is GPIOB
+    __HAL_RCC_GPIOB_CLK_ENABLE();  // just to be sure
+    HAL_GPIO_WritePin(I2C4_SDA_GPIO_Port, I2C4_SCL_Pin|I2C4_SDA_Pin, GPIO_PIN_SET);
+    GPIO_InitStruct.Pin = I2C4_SCL_Pin|I2C4_SDA_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    HAL_GPIO_Init(I2C4_SDA_GPIO_Port, &GPIO_InitStruct);
+    GPIO_PinState bit = HAL_GPIO_ReadPin(I2C4_SDA_GPIO_Port, I2C4_SDA_Pin);
+    if (bit == GPIO_PIN_RESET)
+    {
+    	// need to flush...
+    	while (bit == GPIO_PIN_RESET)
+    	{
+        HAL_GPIO_WritePin(I2C4_SDA_GPIO_Port, I2C4_SCL_Pin, GPIO_PIN_RESET);
+        HAL_Delay(1);
+      	for (unsigned int i = 0; i < 10; i++)
+      	{
+          HAL_GPIO_WritePin(I2C4_SDA_GPIO_Port, I2C4_SCL_Pin, GPIO_PIN_SET);
+          HAL_Delay(1);
+          HAL_GPIO_WritePin(I2C4_SDA_GPIO_Port, I2C4_SCL_Pin, GPIO_PIN_RESET);
+          HAL_Delay(1);
+      	}
+      	bit = HAL_GPIO_ReadPin(I2C4_SDA_GPIO_Port, I2C4_SDA_Pin);
+    	}
+    	// send a STOP signal (SDA from low to high while CLK is high)
+      HAL_GPIO_WritePin(I2C4_SDA_GPIO_Port, I2C4_SDA_Pin, GPIO_PIN_RESET);
+      HAL_Delay(1);
+      HAL_GPIO_WritePin(I2C4_SDA_GPIO_Port, I2C4_SCL_Pin, GPIO_PIN_SET);
+      HAL_Delay(1);
+      HAL_GPIO_WritePin(I2C4_SDA_GPIO_Port, I2C4_SDA_Pin, GPIO_PIN_SET);
+      HAL_Delay(1);
+      //bus status is now : FREE
+    }
+    // deconfig pins
+    HAL_GPIO_DeInit(I2C4_SDA_GPIO_Port, I2C4_SCL_Pin|I2C4_SDA_Pin);
 
   /* USER CODE END I2C4_MspInit 0 */
 
@@ -302,6 +470,10 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
     __HAL_LINKDMA(hi2c,hdmarx,hdma_i2c4_rx);
 
   /* USER CODE BEGIN I2C4_MspInit 1 */
+
+    // Try to make sure we are in reset state
+  	__HAL_RCC_I2C4_FORCE_RESET();
+  	__HAL_RCC_I2C4_RELEASE_RESET();
 
   /* USER CODE END I2C4_MspInit 1 */
   }

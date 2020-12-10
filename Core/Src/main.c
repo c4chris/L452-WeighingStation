@@ -354,7 +354,7 @@ static void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x10909CEC;
+  hi2c1.Init.Timing = 0x00702991;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -400,7 +400,7 @@ static void MX_I2C2_Init(void)
 
   /* USER CODE END I2C2_Init 1 */
   hi2c2.Instance = I2C2;
-  hi2c2.Init.Timing = 0x10909CEC;
+  hi2c2.Init.Timing = 0x00702991;
   hi2c2.Init.OwnAddress1 = 0;
   hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -446,7 +446,7 @@ static void MX_I2C3_Init(void)
 
   /* USER CODE END I2C3_Init 1 */
   hi2c3.Instance = I2C3;
-  hi2c3.Init.Timing = 0x10909CEC;
+  hi2c3.Init.Timing = 0x00702991;
   hi2c3.Init.OwnAddress1 = 0;
   hi2c3.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c3.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -492,7 +492,7 @@ static void MX_I2C4_Init(void)
 
   /* USER CODE END I2C4_Init 1 */
   hi2c4.Instance = I2C4;
-  hi2c4.Init.Timing = 0x10909CEC;
+  hi2c4.Init.Timing = 0x00702991;
   hi2c4.Init.OwnAddress1 = 0;
   hi2c4.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c4.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -972,7 +972,7 @@ void StartWriteLineTask(void const * argument)
 			weight /= 14000;
 			sprintf((char *)msg,"2: %2d.%02d kg", (uint16_t)(weight / 100), (uint16_t)(weight % 100));
 			BSP_LCD_SetFont(&Font24);
-			BSP_LCD_SetTextColor(LCD_COLOR_LIGHTBLUE);
+			BSP_LCD_SetTextColor(LCD_COLOR_LIGHTYELLOW);
 			BSP_LCD_DisplayStringAtLine(6, msg, CENTER_MODE);
 			uint32_t temp = (bridgeValue2[2] << 3) + (bridgeValue2[3] >> 5);
 			temp *= 2000;
@@ -1030,7 +1030,7 @@ void StartWriteLineTask(void const * argument)
 			weight /= 14000;
 			sprintf((char *)msg,"4: %2d.%02d kg", (uint16_t)(weight / 100), (uint16_t)(weight % 100));
 			BSP_LCD_SetFont(&Font24);
-			BSP_LCD_SetTextColor(LCD_COLOR_YELLOW);
+			BSP_LCD_SetTextColor(LCD_COLOR_LIGHTBLUE);
 			BSP_LCD_DisplayStringAtLine(10, msg, CENTER_MODE);
 			uint32_t temp = (bridgeValue4[2] << 3) + (bridgeValue4[3] >> 5);
 			temp *= 2000;
@@ -1065,7 +1065,13 @@ void StartReadI2C1Task(void const * argument)
 		memset(dataBuf, 0, 4);
 		res = HAL_I2C_Master_Receive(&hi2c1, (0x28 << 1) | 1, dataBuf, 4, I2C_Timeout);
 		if (res != HAL_OK)
+		{
 			errs1 += 1;
+			HAL_I2C_DeInit(&hi2c1);
+			osDelay(500);
+			HAL_I2C_Init(&hi2c1);
+			osDelay(500);
+		}
 		else
 		{
 			uint8_t status = (dataBuf[0] >> 6) & 0x3;
@@ -1102,7 +1108,13 @@ void StartReadI2C2Task(void const * argument)
 		memset(dataBuf, 0, 4);
 		res = HAL_I2C_Master_Receive(&hi2c2, (0x28 << 1) | 1, dataBuf, 4, I2C_Timeout);
 		if (res != HAL_OK)
+		{
 			errs2 += 1;
+			HAL_I2C_DeInit(&hi2c3);
+			osDelay(500);
+			HAL_I2C_Init(&hi2c3);
+			osDelay(500);
+		}
 		else
 		{
 			uint8_t status = (dataBuf[0] >> 6) & 0x3;
@@ -1139,7 +1151,13 @@ void StartReadI2C3Task(void const * argument)
 		memset(dataBuf, 0, 4);
 		res = HAL_I2C_Master_Receive(&hi2c3, (0x28 << 1) | 1, dataBuf, 4, I2C_Timeout);
 		if (res != HAL_OK)
+		{
 			errs3 += 1;
+			HAL_I2C_DeInit(&hi2c3);
+			osDelay(500);
+			HAL_I2C_Init(&hi2c3);
+			osDelay(500);
+		}
 		else
 		{
 			uint8_t status = (dataBuf[0] >> 6) & 0x3;
@@ -1176,7 +1194,13 @@ void StartReadI2C4Task(void const * argument)
 		memset(dataBuf, 0, 4);
 		res = HAL_I2C_Master_Receive(&hi2c4, (0x28 << 1) | 1, dataBuf, 4, I2C_Timeout);
 		if (res != HAL_OK)
+		{
 			errs4 += 1;
+			HAL_I2C_DeInit(&hi2c4);
+			osDelay(500);
+			HAL_I2C_Init(&hi2c4);
+			osDelay(500);
+		}
 		else
 		{
 			uint8_t status = (dataBuf[0] >> 6) & 0x3;
