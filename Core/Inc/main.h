@@ -78,12 +78,18 @@ void Error_Handler(void);
 #define USART_TX_GPIO_Port GPIOA
 #define USART_RX_Pin GPIO_PIN_3
 #define USART_RX_GPIO_Port GPIOA
+#define nENP3B_Pin GPIO_PIN_4
+#define nENP3B_GPIO_Port GPIOA
 #define SPI1_SCK_Pin GPIO_PIN_5
 #define SPI1_SCK_GPIO_Port GPIOA
 #define SPI1_MISO_Pin GPIO_PIN_6
 #define SPI1_MISO_GPIO_Port GPIOA
 #define SPI1_MOSI_Pin GPIO_PIN_7
 #define SPI1_MOSI_GPIO_Port GPIOA
+#define nENP3A_Pin GPIO_PIN_0
+#define nENP3A_GPIO_Port GPIOB
+#define nENP1B_Pin GPIO_PIN_2
+#define nENP1B_GPIO_Port GPIOB
 #define I2C2_SCL_Pin GPIO_PIN_10
 #define I2C2_SCL_GPIO_Port GPIOB
 #define I2C2_SDA_Pin GPIO_PIN_11
@@ -94,6 +100,8 @@ void Error_Handler(void);
 #define JOY_CENTER_GPIO_Port GPIOC
 #define JOY_LEFT_Pin GPIO_PIN_9
 #define JOY_LEFT_GPIO_Port GPIOC
+#define nENP1A_Pin GPIO_PIN_8
+#define nENP1A_GPIO_Port GPIOA
 #define I2C1_SCL_Pin GPIO_PIN_9
 #define I2C1_SCL_GPIO_Port GPIOA
 #define I2C1_SDA_Pin GPIO_PIN_10
