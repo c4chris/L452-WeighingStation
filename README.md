@@ -6,6 +6,16 @@
 
 ![Board setup](board_setup.jpg)
 
+---
+
+## I2C interface board
+
+The small interface board design is available on Open Source Hardware Lab
+
+https://oshwlab.com/ciseli/i2c_dual_interface
+
+---
+
 ## Signals
 
 ### 10k pull-ups
