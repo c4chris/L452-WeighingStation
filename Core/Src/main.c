@@ -1069,14 +1069,13 @@ void StartWriteLineTask(void const * argument)
 		for (unsigned int i = 0; i < 4; i++)
 			if (cell[i].address != 0)
 				counted += 1;
-		// for now
-		counted += 2;
 	}
 	BSP_LCD_SetBackColor(0);
 	availableCells = counted;
   /* Infinite loop */
   for(;;)
   {
+  	// should maybe setup a way to go back to probe and address adjust mode if there are errors
   	uint32_t ticks = osKernelSysTick() / pdMS_TO_TICKS(1000);
   	BSP_LCD_SetTextColor(LCD_COLOR_GREEN);
   	BSP_LCD_SetFont(&Font24);
@@ -1104,7 +1103,7 @@ void StartWriteLineTask(void const * argument)
 					weight -= low[i];
 				weight *= 5000;
 				weight /= 14000;
-				sprintf((char *)msg,"1: %2d.%02d kg", (uint16_t)(weight / 100), (uint16_t)(weight % 100));
+				sprintf((char *)msg,"%u: %2d.%02d kg", i, (uint16_t)(weight / 100), (uint16_t)(weight % 100));
 				BSP_LCD_SetFont(&Font24);
 				BSP_LCD_SetTextColor(LCD_COLOR_LIGHTGRAY);
 				BSP_LCD_DisplayStringAtLine(i * 2 + 4, msg, CENTER_MODE);
@@ -1133,23 +1132,25 @@ void StartWriteLineTask(void const * argument)
 void StartReadI2C1Task(void const * argument)
 {
   /* USER CODE BEGIN StartReadI2C1Task */
+	const unsigned int cellStart = 0;
+	const unsigned int cellEnd = 2;
 	/* Need to wait until I2C bus 1 peripherals are properly setup in WriteLine task */
 	for(;;)
 	{
 		osDelay(500);
-		if (availableCells >= 2)
+		if (availableCells == 4)
 			break;
 	}
 	const uint32_t I2C_Timeout = I2Cx_TIMEOUT_MAX;
 	HAL_StatusTypeDef res;
 	uint8_t dataBuf[4];
-	HAL_GPIO_WritePin(cell[0].gpio, cell[0].pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(cell[1].gpio, cell[1].pin, GPIO_PIN_RESET);
+	for (unsigned int i = cellStart; i < cellEnd; i++)
+		HAL_GPIO_WritePin(cell[i].gpio, cell[i].pin, GPIO_PIN_RESET);
 	HAL_Delay(10);
 	/* Infinite loop */
 	for(;;)
 	{
-		for (unsigned int i = 0; i < 2; i++)
+		for (unsigned int i = cellStart; i < cellEnd; i++)
 		{
 			memset(dataBuf, 0, 4);
 			res = HAL_I2C_Master_Receive(cell[i].handle, cell[i].address | 1, dataBuf, 4, I2C_Timeout);
@@ -1232,38 +1233,48 @@ void StartReadI2C2Task(void const * argument)
 void StartReadI2C3Task(void const * argument)
 {
   /* USER CODE BEGIN StartReadI2C3Task */
+	const unsigned int cellStart = 2;
+	const unsigned int cellEnd = 4;
 	/* Need to wait until I2C bus 3 peripherals are properly setup in WriteLine task */
 	for(;;)
 	{
 		osDelay(500);
+		if (availableCells == 4)
+			break;
 	}
 	const uint32_t I2C_Timeout = I2Cx_TIMEOUT_MAX;
 	HAL_StatusTypeDef res;
 	uint8_t dataBuf[4];
+	for (unsigned int i = cellStart; i < cellEnd; i++)
+		HAL_GPIO_WritePin(cell[i].gpio, cell[i].pin, GPIO_PIN_RESET);
+	HAL_Delay(10);
 	/* Infinite loop */
 	for(;;)
 	{
-		memset(dataBuf, 0, 4);
-		res = HAL_I2C_Master_Receive(&hi2c3, (0x28 << 1) | 1, dataBuf, 4, I2C_Timeout);
-		if (res != HAL_OK)
+		for (unsigned int i = cellStart; i < cellEnd; i++)
 		{
-			errs3 += 1;
-			HAL_I2C_DeInit(&hi2c3);
-			osDelay(500);
-			HAL_I2C_Init(&hi2c3);
-			osDelay(500);
-		}
-		else
-		{
-			uint8_t status = (dataBuf[0] >> 6) & 0x3;
-			if (status == 0)
+			memset(dataBuf, 0, 4);
+			res = HAL_I2C_Master_Receive(cell[i].handle, cell[i].address | 1, dataBuf, 4, I2C_Timeout);
+			if (res != HAL_OK)
 			{
-				counts3 += 1;
-				memcpy((void *) bridgeValue3, dataBuf, 4);
-			} else if (status == 2)
-				stale3 += 1;
+				errs[i] += 1;
+				HAL_I2C_DeInit(cell[i].handle);
+				osDelay(500);
+				HAL_I2C_Init(cell[i].handle);
+				osDelay(500);
+			}
 			else
-				badstatus3 += 1;
+			{
+				uint8_t status = (dataBuf[0] >> 6) & 0x3;
+				if (status == 0)
+				{
+					counts[i] += 1;
+					memcpy((void *) bridgeValue + i * 4, dataBuf, 4);
+				} else if (status == 2)
+					stale[i] += 1;
+				else
+					badstatus[i] += 1;
+			}
 		}
 		osDelay(50);
 	}
